@@ -269,9 +269,8 @@ def _fetch_via_apify(username: str, token: str, actor_id: str) -> dict:
         json=payload, timeout=60
     )
     if not start_resp.ok:
-    print("Apify response:", start_resp.text)
-    start_resp.raise_for_status()
-    run = start_resp.json()
+        print("Apify response:", start_resp.text)start_resp.raise_for_status()
+        run = start_resp.json()
     data_block = run.get("data") if isinstance(run.get("data"), dict) else run
     run_id = data_block.get("id") or data_block.get("runId")
     if not run_id:
