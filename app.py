@@ -268,6 +268,8 @@ def _fetch_via_apify(username: str, token: str, actor_id: str) -> dict:
         f"https://api.apify.com/v2/acts/{actor_id}/runs?token={token}",
         json=payload, timeout=60
     )
+    if not start_resp.ok:
+    print("Apify response:", start_resp.text)
     start_resp.raise_for_status()
     run = start_resp.json()
     data_block = run.get("data") if isinstance(run.get("data"), dict) else run
