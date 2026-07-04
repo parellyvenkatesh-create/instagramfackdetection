@@ -260,46 +260,62 @@ def _pick(data: dict, *keys, default=None):
 
 
 def _fetch_via_apify(username: str, token: str, actor_id: str):
-    actor_id = actor_id.replace("/", "~")
-
     payload = {
         "usernames": [username]
     }
 
+    # Start the actor
     start_resp = http_requests.post(
         f"https://api.apify.com/v2/acts/{actor_id}/runs?token={token}",
         json=payload,
-        timeout=60
+        timeout=60,
     )
 
-    print("Status:", start_resp.status_code)
-    print("Response:", start_resp.text)
+    print("Start Status:", start_resp.status_code)
+    print("Start Response:", start_resp.text)
 
     start_resp.raise_for_status()
 
     run = start_resp.json()["data"]
     run_id = run["id"]
 
+    # Wait until the actor finishes
     while True:
-        status = http_requests.get(
+        run_resp = http_requests.get(
             f"https://api.apify.com/v2/acts/{actor_id}/runs/{run_id}?token={token}",
-            timeout=60
-        ).json()["data"]
+            timeout=60,
+        )
 
-        if status["status"] == "SUCCEEDED":
+        run_resp.raise_for_status()
+
+        run_data = run_resp.json()["data"]
+        status = run_data["status"]
+
+        print("Actor Status:", status)
+
+        if status == "SUCCEEDED":
             break
 
-        if status["status"] == "FAILED":
-            raise Exception("Apify Actor Failed")
+        if status in ["FAILED", "ABORTED", "TIMED-OUT"]:
+            raise Exception(f"Apify Actor {status}")
 
         time.sleep(5)
 
-    dataset = status["defaultDatasetId"]
+    dataset_id = run_data["defaultDatasetId"]
 
+    # Read dataset
     items_resp = http_requests.get(
-        f"https://api.apify.com/v2/datasets/{dataset}/items?clean=true&limit=1",
-        timeout=60
+        f"https://api.apify.com/v2/datasets/{dataset_id}/items",
+        params={
+            "token": token,
+            "clean": "true",
+            "limit": 1,
+        },
+        timeout=60,
     )
+
+    print("Dataset Status:", items_resp.status_code)
+    print("Dataset Response:", items_resp.text)
 
     items_resp.raise_for_status()
 
@@ -310,6 +326,9 @@ def _fetch_via_apify(username: str, token: str, actor_id: str):
 
     item = items[0]
 
+    if item.get("error"):
+        raise Exception(item["error"])
+
     return {
         "username": item.get("username", username),
         "followers": int(item.get("followersCount", 0)),
@@ -317,7 +336,7 @@ def _fetch_via_apify(username: str, token: str, actor_id: str):
         "biography": item.get("biography", ""),
         "media_count": int(item.get("postsCount", 0)),
         "has_profile_pic": 1 if item.get("profilePicUrl") else 0,
-        "is_private": 1 if item.get("private", False) else 0,
+        "is_private": 1 if item.get("isPrivate", False) else 0,
     }
 def build_features(profile: dict) -> ProfileFeatures:
     username    = profile["username"]
