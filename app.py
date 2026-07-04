@@ -259,64 +259,60 @@ def _pick(data: dict, *keys, default=None):
     return default
 
 
-def _fetch_via_apify(username: str, token: str, actor_id: str) -> dict:
-    actor_id = actor_id.replace("/", "~") if "/" in actor_id and "~" not in actor_id else actor_id
-    profile_url = f"https://www.instagram.com/{username}/"
-    payload     = {"directUrls": [profile_url], "resultsType": "details","resultsLimit":1}
+def _fetch_via_apify(username: str, token: str, actor_id: str):
+    actor_id = actor_id.replace("/", "~")
+
+    payload = {
+        "directUrls": [f"https://www.instagram.com/{username}/"],
+        "resultsType": "details",
+        "resultsLimit": 1
+    }
 
     start_resp = http_requests.post(
         f"https://api.apify.com/v2/acts/{actor_id}/runs?token={token}",
-        json=payload, timeout=60
-    )
-    if not start_resp.ok:
-        print("Apify response:", start_resp.text)start_resp.raise_for_status()
-        run = start_resp.json()
-    data_block = run.get("data") if isinstance(run.get("data"), dict) else run
-    run_id = data_block.get("id") or data_block.get("runId")
-    if not run_id:
-        raise RuntimeError("Apify did not return a run ID.")
-
-    max_wait, interval, elapsed = int(os.getenv("APIFY_POLL_MAX_SECONDS", "300")), 5, 0
-    run_state = None
-    while elapsed < max_wait:
-        r = http_requests.get(f"https://api.apify.com/v2/acts/{actor_id}/runs/{run_id}?token={token}", timeout=60)
-        r.raise_for_status()
-        run_state = r.json()
-        blk = run_state.get("data") if isinstance(run_state.get("data"), dict) else run_state
-        if (blk.get("status") or blk.get("state")) in {"SUCCEEDED", "FAILED"}:
-            break
-        time.sleep(interval); elapsed += interval
-
-    blk = run_state.get("data") if isinstance((run_state or {}).get("data"), dict) else (run_state or {})
-    if (blk.get("status") or blk.get("state")) != "SUCCEEDED":
-        raise RuntimeError("Apify run did not succeed.")
-    dataset_id = blk.get("defaultDatasetId") or blk.get("defaultDatasetID")
-    items_resp = http_requests.get(
-        f"https://api.apify.com/v2/datasets/{dataset_id}/items?token={token}&clean=true&limit=1",
+        json=payload,
         timeout=60
     )
-    items_resp.raise_for_status()
-    items = items_resp.json()
-    if not isinstance(items, list) or not items:
-        raise RuntimeError("Apify dataset returned no items.")
+
+    print("Status:", start_resp.status_code)
+    print("Response:", start_resp.text)
+
+    start_resp.raise_for_status()
+
+    run = start_resp.json()["data"]
+
+    run_id = run["id"]
+
+    while True:
+        status = http_requests.get(
+            f"https://api.apify.com/v2/acts/{actor_id}/runs/{run_id}?token={token}"
+        ).json()["data"]
+
+        if status["status"] == "SUCCEEDED":
+            break
+
+        if status["status"] == "FAILED":
+            raise Exception("Apify Actor Failed")
+
+        time.sleep(5)
+
+    dataset = status["defaultDatasetId"]
+
+    items = http_requests.get(
+        f"https://api.apify.com/v2/datasets/{dataset}/items?clean=true"
+    ).json()
+
     item = items[0]
-    followers = item.get("followersCount") or 0
-    following = item.get("followsCount") or 0
-    media     = item.get("postsCount") or 0
-    bio       = item.get("biography") or ""
-    pic_url   = item.get("profilePicUrl") or ""
-    is_private = item.get("isPrivate") or False
+
     return {
-    "username": item.get("username", username),
-    "followers": int(item.get("followersCount", 0)),
-    "following": int(item.get("followsCount", 0)),
-    "biography": item.get("biography", ""),
-    "media_count": int(item.get("postsCount", 0)),
-    "has_profile_pic": 1 if item.get("profilePicUrl") else 0,
-    "is_private": 1 if item.get("private", False) else 0,
-}
-
-
+        "username": item["username"],
+        "followers": item["followersCount"],
+        "following": item["followsCount"],
+        "biography": item["biography"],
+        "media_count": item["postsCount"],
+        "has_profile_pic": 1 if item["profilePicUrl"] else 0,
+        "is_private": 1 if item["private"] else 0,
+    }
 def build_features(profile: dict) -> ProfileFeatures:
     username    = profile["username"]
     followers   = int(profile["followers"])
