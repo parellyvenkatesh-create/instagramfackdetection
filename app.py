@@ -263,10 +263,8 @@ def _fetch_via_apify(username: str, token: str, actor_id: str):
     actor_id = actor_id.replace("/", "~")
 
     payload = {
-        "directUrls": [f"https://www.instagram.com/{username}/"],
-        "resultsType": "details",
-        "resultsLimit": 1
-    }
+    "usernames": [username]
+}
 
     start_resp = http_requests.post(
         f"https://api.apify.com/v2/acts/{actor_id}/runs?token={token}",
