@@ -1,0 +1,10 @@
+Flask
+flask-cors
+Werkzeug
+instaloader
+requests
+pandas
+scikit-learn
+xgboost
+joblib
+python-dotenv

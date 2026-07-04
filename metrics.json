@@ -1,0 +1,9 @@
+{
+    "algorithms": {
+        "Logistic Regression": 97.07,
+        "Random Forest": 97.91,
+        "XGBoost": 97.49,
+        "SVM": 92.89
+    },
+    "ensemble": 98.33
+}

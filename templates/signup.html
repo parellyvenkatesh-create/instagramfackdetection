@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — InstaGuard AI</title>
+  <meta name="description" content="Create your InstaGuard AI account — Instagram Fake Account Detection powered by Machine Learning.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body class="auth-page">
+
+  <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+  <div class="auth-bg">
+    <div class="auth-blob auth-blob--1"></div>
+    <div class="auth-blob auth-blob--2"></div>
+    <div class="auth-blob auth-blob--3"></div>
+  </div>
+
+  <button id="themeToggle" class="auth-theme-btn" title="Toggle theme" aria-label="Toggle theme">
+    <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+  </button>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="auth-container auth-container--signup">
+    <div class="auth-card auth-card--wide" id="authCard">
+
+      <div class="auth-logo">
+        <div class="auth-logo__ring auth-logo__ring--1"></div>
+        <div class="auth-logo__ring auth-logo__ring--2"></div>
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="url(#igS)" stroke-width="1.7"/>
+          <circle cx="12" cy="12" r="4" stroke="url(#igS)" stroke-width="1.7"/>
+          <circle cx="17.5" cy="6.5" r="1.25" fill="url(#igS)"/>
+          <defs>
+            <linearGradient id="igS" x1="2" y1="22" x2="22" y2="2">
+              <stop stop-color="#fcb045"/><stop offset=".4" stop-color="#fd1d1d"/><stop offset="1" stop-color="#833ab4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-subtitle">Join <span class="text-gradient">InstaGuard AI</span> — free forever</p>
+
+      <form id="signupForm" class="auth-form" novalidate>
+        <!-- Username -->
+        <div class="field-wrap" id="fieldUsername">
+          <div class="field-box">
+            <input id="username" type="text" class="auth-input" placeholder=" " autocomplete="username" required>
+            <label class="auth-label" for="username">Username</label>
+            <div class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+          </div>
+          <span class="field-error" id="errUsername"></span>
+        </div>
+
+        <!-- Email -->
+        <div class="field-wrap" id="fieldEmail">
+          <div class="field-box">
+            <input id="email" type="email" class="auth-input" placeholder=" " autocomplete="email" required>
+            <label class="auth-label" for="email">Email Address</label>
+            <div class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+          </div>
+          <span class="field-error" id="errEmail"></span>
+        </div>
+
+        <!-- Password -->
+        <div class="field-wrap" id="fieldPassword">
+          <!-- Strength info moved above -->
+          <div class="pwd-strength" id="pwdStrength">
+            <div class="pwd-strength__bar">
+              <div class="pwd-strength__fill" id="pwdFill"></div>
+            </div>
+            <span class="pwd-strength__label" id="pwdLabel">Enter a password</span>
+          </div>
+
+          <div class="field-box">
+            <input id="password" type="password" class="auth-input" placeholder=" " autocomplete="new-password" required>
+            <label class="auth-label" for="password">Password</label>
+            <div class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <button type="button" class="show-password-btn" id="showPwdBtn" aria-label="Toggle password">
+              <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-closed hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <span class="field-error" id="errPassword"></span>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="field-wrap" id="fieldConfirm">
+          <div class="field-box">
+            <input id="confirmPassword" type="password" class="auth-input" placeholder=" " autocomplete="new-password" required>
+            <label class="auth-label" for="confirmPassword">Confirm Password</label>
+            <div class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+          </div>
+          <span class="field-error" id="errConfirm"></span>
+        </div>
+
+        <!-- Password rules -->
+        <ul class="pwd-rules" id="pwdRules">
+          <li class="pwd-rule" id="rule-len">  <span class="pwd-rule__dot"></span>At least 8 characters</li>
+          <li class="pwd-rule" id="rule-upper"><span class="pwd-rule__dot"></span>One uppercase letter</li>
+          <li class="pwd-rule" id="rule-num">  <span class="pwd-rule__dot"></span>One number</li>
+        </ul>
+
+        <button type="submit" class="btn btn--primary auth-submit" id="signupBtn">
+          <span class="btn-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            Create Account
+          </span>
+          <span class="btn-loading hidden"><span class="spinner"></span> Creating account…</span>
+        </button>
+
+        <div class="auth-divider"><span>or</span></div>
+
+        <p class="auth-switch">
+          Already have an account?
+          <a href="/login" class="auth-link auth-link--bold">Sign in →</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InstaGuard AI — Instagram Fake Profile Detector</title>
+  <meta name="description" content="AI-powered Instagram fake profile detection using Logistic Regression, Random Forest, XGBoost, SVM and Voting Classifier ensemble.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+
+  <!-- ===== SPLASH SCREEN ===== -->
+  <div id="splashScreen" class="splash">
+    <div class="splash__ring splash__ring--outer"></div>
+    <div class="splash__ring splash__ring--middle"></div>
+    <div class="splash__ring splash__ring--inner"></div>
+    <div class="splash__logo">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="url(#igGrad)" stroke-width="1.8"/>
+        <circle cx="12" cy="12" r="4" stroke="url(#igGrad)" stroke-width="1.8"/>
+        <circle cx="17.5" cy="6.5" r="1.2" fill="url(#igGrad)"/>
+        <defs>
+          <linearGradient id="igGrad" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#f09433"/>
+            <stop offset="0.25" stop-color="#e6683c"/>
+            <stop offset="0.5" stop-color="#dc2743"/>
+            <stop offset="0.75" stop-color="#cc2366"/>
+            <stop offset="1" stop-color="#bc1888"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="splash__text">
+      <span class="splash__brand">InstaGuard</span>
+      <span class="splash__ai-pill">AI</span>
+    </div>
+    <div class="splash__sub">Fake Profile Detection Engine</div>
+    <div class="splash__loader">
+      <div class="splash__loader-bar"></div>
+    </div>
+  </div>
+
+  <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+  <!-- ===== ANIMATED BACKGROUND ===== -->
+  <div class="bg-aurora">
+    <div class="aurora-blob aurora-blob--1"></div>
+    <div class="aurora-blob aurora-blob--2"></div>
+    <div class="aurora-blob aurora-blob--3"></div>
+    <div class="aurora-blob aurora-blob--4"></div>
+  </div>
+  <div class="bg-grid-overlay"></div>
+
+  <!-- ===== TOAST CONTAINER ===== -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- ===== TOP NAV ===== -->
+  <nav id="navbar" class="topnav">
+    <div class="topnav__inner">
+      <a href="/" class="topnav__brand">
+        <div class="topnav__ig-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="url(#igNav)" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="4" stroke="url(#igNav)" stroke-width="1.8"/>
+            <circle cx="17.5" cy="6.5" r="1.2" fill="url(#igNav)"/>
+            <defs>
+              <linearGradient id="igNav" x1="2" y1="22" x2="22" y2="2">
+                <stop stop-color="#f09433"/><stop offset=".5" stop-color="#dc2743"/><stop offset="1" stop-color="#bc1888"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="topnav__name">InstaGuard<span class="topnav__ai">AI</span></span>
+      </a>
+
+      <div class="topnav__actions">
+        <!-- User greeting -->
+        <div class="nav-user-chip">
+          <div class="nav-user-avatar">{{ username[0]|upper }}</div>
+          <span class="nav-user-name">{{ username }}</span>
+        </div>
+        <button id="historyBtn" class="nav-btn" title="View history">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>History</span>
+        </button>
+        <button id="themeToggle" class="nav-btn theme-toggle" title="Toggle theme" aria-label="Toggle light/dark mode">
+          <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun hidden" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <span class="theme-label">Light</span>
+        </button>
+        <button id="logoutBtn" class="nav-btn nav-btn--logout" title="Sign out">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO / INPUT ===== -->
+  <header id="hero" class="hero">
+    <div class="hero__content anim-fade-up">
+      <!-- Floating Instagram Logo -->
+      <div class="hero__logo-wrap">
+        <div class="hero__logo-ring hero__logo-ring--1"></div>
+        <div class="hero__logo-ring hero__logo-ring--2"></div>
+        <svg width="88" height="88" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="url(#igHero)" stroke-width="1.6"/>
+          <circle cx="12" cy="12" r="4" stroke="url(#igHero)" stroke-width="1.6"/>
+          <circle cx="17.5" cy="6.5" r="1.3" fill="url(#igHero)"/>
+          <defs>
+            <linearGradient id="igHero" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fcb045"/>
+              <stop offset="0.33" stop-color="#fd1d1d"/>
+              <stop offset="0.66" stop-color="#e1306c"/>
+              <stop offset="1" stop-color="#833ab4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="hero__pill">
+        <span class="hero__pill-dot"></span>
+        AI-Powered Security ⚡
+      </div>
+      <h1 class="hero__title">
+        Instagram <span class="text-gradient">Fake</span><br>Profile Detector⚡
+      </h1>
+      <p class="hero__desc">
+        Instantly detect fraudulent accounts using an ensemble of <strong>Logistic Regression</strong>,
+        <strong>Random Forest</strong>, <strong>XGBoost</strong>, <strong>SVM</strong> &amp; <strong>Stacking Classifier</strong>.
+      </p>
+
+      <!-- Stats Row -->
+      <div class="hero__stats anim-fade-up" style="animation-delay:.25s">
+        <div class="hero__stat">
+          <span class="hero__stat-num">1,194</span>
+          <span class="hero__stat-lbl">Profiles</span>
+        </div>
+        <div class="hero__stat-divider"></div>
+        <div class="hero__stat">
+          <span class="hero__stat-num">97.5%</span>
+          <span class="hero__stat-lbl">Accuracy</span>
+        </div>
+        <div class="hero__stat-divider"></div>
+        <div class="hero__stat">
+          <span class="hero__stat-num">5</span>
+          <span class="hero__stat-lbl">ML Models</span>
+        </div>
+        <div class="hero__stat-divider"></div>
+        <div class="hero__stat">
+          <span class="hero__stat-num">10</span>
+          <span class="hero__stat-lbl">Features</span>
+        </div>
+      </div>
+
+      <!-- Feature Highlights -->
+      <div class="hero__features anim-fade-up" style="animation-delay:.35s">
+        <div class="hero__feature-card">
+          <div class="hero__feature-icon hero__feature-icon--search">🔍</div>
+          <div>
+            <div class="hero__feature-title">Smart URL Analysis</div>
+            <div class="hero__feature-desc">Paste any Instagram URL and get instant verification</div>
+          </div>
+        </div>
+        <div class="hero__feature-card">
+          <div class="hero__feature-icon hero__feature-icon--ai">🤖</div>
+          <div>
+            <div class="hero__feature-title">AI Ensemble Engine</div>
+            <div class="hero__feature-desc">5 ML models collaborate for peak detection accuracy</div>
+          </div>
+        </div>
+        <div class="hero__feature-card">
+          <div class="hero__feature-icon hero__feature-icon--acc">📊</div>
+          <div>
+            <div class="hero__feature-title">97.5% Accuracy</div>
+            <div class="hero__feature-desc">Trained &amp; validated on 1,194 real-world profiles</div>
+          </div>
+        </div>
+      </div>
+
+      <form id="analyzeForm" class="hero__form" autocomplete="off">
+        <div class="search-bar" id="scanWrap">
+          <div class="search-bar__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5.5" /><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <input
+            id="profileUrl"
+            type="url"
+            placeholder="https://www.instagram.com/username/"
+            required
+          />
+          <button type="submit" id="analyzeBtn" class="btn btn--primary btn--glow">
+            <span class="btn-label">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              Analyze Profile
+            </span>
+            <span class="btn-loading hidden">
+              <span class="spinner"></span>
+              Scanning…
+            </span>
+          </button>
+        </div>
+        <div class="hero__meta-row">
+          <span class="hero__meta-dot"></span><span>System Online</span>
+          <span>Instant analysis</span>
+          <span>No login required</span>
+        </div>
+      </form>
+
+      <div id="message" class="alert hidden"></div>
+    </div>
+  </header>
+
+  <!-- ===== ML ENSEMBLE MODELS SECTION ===== -->
+  <section class="ensemble-section anim-fade-up" style="animation-delay:.5s">
+    <div class="ensemble-section__inner">
+      <div class="section-header">
+        <div class="section-header__icon">🤖</div>
+        <div>
+          <h2 class="section-header__title">ML Ensemble Models</h2>
+          <p class="section-header__sub">5 algorithms trained &amp; validated on 1,194 Instagram profiles</p>
+        </div>
+      </div>
+
+      <!-- Model Cards Grid -->
+      <div class="model-cards-grid">
+        <!-- Logistic Regression -->
+        <div class="model-card">
+          <div class="model-card__icon model-card__icon--lr">🧠</div>
+          <div class="model-card__name">Logistic Regression</div>
+          <div class="model-card__sub">Level-1 Meta-Learner</div>
+          <div class="model-card__accuracy" id="mcAccLR">97.49%</div>
+          <div class="model-card__acc-lbl">ACCURACY</div>
+          <div class="model-card__metrics">
+            <span id="mcPrecLR">97.22%</span>
+            <span id="mcRecLR">87.5%</span>
+            <span id="mcF1LR">92.11%</span>
+          </div>
+          <div class="model-card__metric-lbls">
+            <span>PREC</span><span>REC</span><span>F1</span>
+          </div>
+        </div>
+
+        <!-- Random Forest (BEST F1) -->
+        <div class="model-card model-card--best">
+          <div class="model-card__best-badge">🏆 BEST F1</div>
+          <div class="model-card__icon model-card__icon--rf">🌲</div>
+          <div class="model-card__name">Random Forest</div>
+          <div class="model-card__sub">300 decision trees ensemble</div>
+          <div class="model-card__accuracy" id="mcAccRF">97.49%</div>
+          <div class="model-card__acc-lbl">ACCURACY</div>
+          <div class="model-card__metrics">
+            <span id="mcPrecRF">94.74%</span>
+            <span id="mcRecRF">90%</span>
+            <span id="mcF1RF">92.31%</span>
+          </div>
+          <div class="model-card__metric-lbls">
+            <span>PREC</span><span>REC</span><span>F1</span>
+          </div>
+        </div>
+
+        <!-- SVM -->
+        <div class="model-card">
+          <div class="model-card__icon model-card__icon--svm">🔷</div>
+          <div class="model-card__name">SVM</div>
+          <div class="model-card__sub">Support Vector, RBF kernel</div>
+          <div class="model-card__accuracy" id="mcAccSVM">97.07%</div>
+          <div class="model-card__acc-lbl">ACCURACY</div>
+          <div class="model-card__metrics">
+            <span id="mcPrecSVM">97.14%</span>
+            <span id="mcRecSVM">85%</span>
+            <span id="mcF1SVM">90.67%</span>
+          </div>
+          <div class="model-card__metric-lbls">
+            <span>PREC</span><span>REC</span><span>F1</span>
+          </div>
+        </div>
+
+        <!-- XGBoost -->
+        <div class="model-card">
+          <div class="model-card__icon model-card__icon--xgb">⚡</div>
+          <div class="model-card__name">XGBoost</div>
+          <div class="model-card__sub">Gradient boosted with L1/L2</div>
+          <div class="model-card__accuracy" id="mcAccXGB">97.07%</div>
+          <div class="model-card__acc-lbl">ACCURACY</div>
+          <div class="model-card__metrics">
+            <span id="mcPrecXGB">92.31%</span>
+            <span id="mcRecXGB">90%</span>
+            <span id="mcF1XGB">91.14%</span>
+          </div>
+          <div class="model-card__metric-lbls">
+            <span>PREC</span><span>REC</span><span>F1</span>
+          </div>
+        </div>
+
+        <!-- Stacking Ensemble -->
+        <div class="model-card">
+          <div class="model-card__icon model-card__icon--vote">✅</div>
+          <div class="model-card__name">Stacking Ensemble</div>
+          <div class="model-card__sub">Meta-learner Logistic Regression</div>
+          <div class="model-card__accuracy" id="mcAccVote">97.49%</div>
+          <div class="model-card__acc-lbl">ACCURACY</div>
+          <div class="model-card__metrics">
+            <span id="mcPrecVote">94.74%</span>
+            <span id="mcRecVote">90%</span>
+            <span id="mcF1Vote">92.31%</span>
+          </div>
+          <div class="model-card__metric-lbls">
+            <span>PREC</span><span>REC</span><span>F1</span>
+          </div>
+        </div>
+
+      </div><!-- /model-cards-grid -->
+    </div>
+  </section>
+
+
+
+  <!-- ===== RESULTS DASHBOARD ===== -->
+  <main id="resultDashboard" class="dashboard hidden">
+
+    <!-- ── RESULT HERO CARD ── -->
+    <div class="result-hero anim-fade-up">
+      <div class="result-card" id="resultCard">
+        <div class="result-card__glow" id="resultGlow"></div>
+        <div class="result-card__left">
+          <div class="result-card__avatar" id="profileAvatar">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="result-card__info">
+            <h2 class="result-card__username" id="usernameText">@username</h2>
+            <p class="result-card__sub" id="resultSubtitle">Instagram Profile Analysis</p>
+          </div>
+        </div>
+        <div class="result-card__verdict" id="verdictBlock">
+          <div class="verdict-icon" id="verdictIcon">
+            <!-- injected by JS -->
+          </div>
+          <div class="verdict-text">
+            <div class="verdict-label" id="verdictLabel">—</div>
+            <div class="verdict-conf" id="verdictConf">—% confidence</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 1: Stats + Gauge -->
+    <div class="grid grid--hero">
+      <!-- Profile Stats Card -->
+      <section class="card anim-slide" id="cardProfile">
+        <div class="card__label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile Statistics
+        </div>
+        <div class="stat-row">
+          <div class="stat" data-tooltip="Total followers">
+            <div class="stat__icon stat__icon--purple">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="stat__body">
+              <span class="stat__num" id="followersText">—</span>
+              <span class="stat__lbl">Followers</span>
+            </div>
+          </div>
+          <div class="stat" data-tooltip="Accounts following">
+            <div class="stat__icon stat__icon--blue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            </div>
+            <div class="stat__body">
+              <span class="stat__num" id="followingText">—</span>
+              <span class="stat__lbl">Following</span>
+            </div>
+          </div>
+          <div class="stat" data-tooltip="Total posts">
+            <div class="stat__icon stat__icon--cyan">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </div>
+            <div class="stat__body">
+              <span class="stat__num" id="postsText">—</span>
+              <span class="stat__lbl">Posts</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature Pills -->
+        <div class="feat-pills">
+          <div class="feat-pill" id="pillPrivate">
+            <span class="feat-pill__icon">🔒</span>
+            <span class="feat-pill__lbl">Private</span>
+            <span class="feat-pill__val" id="pillPrivateVal">—</span>
+          </div>
+          <div class="feat-pill" id="pillPic">
+            <span class="feat-pill__icon">🖼️</span>
+            <span class="feat-pill__lbl">Profile Pic</span>
+            <span class="feat-pill__val" id="pillPicVal">—</span>
+          </div>
+          <div class="feat-pill" id="pillRatio">
+            <span class="feat-pill__icon">⚖️</span>
+            <span class="feat-pill__lbl">F/F Ratio</span>
+            <span class="feat-pill__val" id="pillRatioVal">—</span>
+          </div>
+        </div>
+
+        <!-- Confidence Bar -->
+        <div class="conf">
+          <div class="conf__top">
+            <span class="conf__title">Confidence Score</span>
+            <span class="conf__val" id="confidenceText">0%</span>
+          </div>
+          <div class="conf__track">
+            <div class="conf__fill" id="confidenceBar"></div>
+          </div>
+          <div class="conf__sub" id="confidenceLabel">Awaiting analysis…</div>
+        </div>
+      </section>
+
+      <!-- Gauge Card -->
+      <section class="card card--gauge anim-slide anim-d1" id="cardGauge">
+        <div class="card__label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636-2.87L13.637 3.59a1.914 1.914 0 0 0-3.274 0z"/><circle cx="12" cy="17" r="1"/></svg>
+          Risk Assessment
+        </div>
+        <div class="gauge-wrap">
+          <canvas id="gaugeChart" width="300" height="190"></canvas>
+          <div class="gauge-center">
+            <div class="gauge-center__pct" id="gaugePercent">0</div>
+            <div class="gauge-center__lbl">Risk Score</div>
+          </div>
+        </div>
+        <div class="gauge-legend">
+          <span><i class="dot dot--green"></i>Real</span>
+          <span><i class="dot dot--yellow"></i>Suspicious</span>
+          <span><i class="dot dot--red"></i>Fake</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- ROW 2: Charts -->
+    <div class="grid grid--charts">
+      <!-- Follower vs Following -->
+      <section class="card anim-slide anim-d2">
+        <div class="card__label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Follower vs Following
+        </div>
+        <div class="chart-box chart-box--bar">
+          <canvas id="followBarChart"></canvas>
+        </div>
+        <div class="chart-note" id="followInsight">
+          <span class="chart-note__dot"></span>
+          <span id="followInsightText">Awaiting analysis…</span>
+        </div>
+      </section>
+
+      <!-- Activity -->
+      <section class="card anim-slide anim-d3">
+        <div class="card__label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Activity Pattern
+        </div>
+        <div class="chart-box chart-box--line">
+          <canvas id="activityChart"></canvas>
+        </div>
+        <div class="chart-note" id="activityInsight">
+          <span class="chart-note__dot"></span>
+          <span id="activityInsightText">Awaiting analysis…</span>
+        </div>
+      </section>
+
+      <!-- Authenticity Donut -->
+      <section class="card anim-slide anim-d4">
+        <div class="card__label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          Authenticity Breakdown
+        </div>
+        <div class="chart-box chart-box--donut">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <!-- ROW 3: AI Insights -->
+    <div class="grid grid--full">
+      <section class="card anim-slide anim-d5" id="cardInsights">
+        <div class="card__label card__label--lg" id="insightsHeading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="10" y1="23" x2="14" y2="23"/></svg>
+          AI Insights &amp; Findings
+        </div>
+        <div class="insights-wrap" id="insightsGrid"></div>
+      </section>
+    </div>
+
+    <!-- ROW 4: Detection Reasons -->
+    <div class="grid grid--full">
+      <section class="card anim-slide anim-d6" id="cardReasons">
+        <div class="card__label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Detection Signals
+        </div>
+        <div class="tags-wrap" id="reasonTags"></div>
+      </section>
+    </div>
+
+    <!-- ROW 5: Download PDF Button -->
+    <div class="grid grid--full anim-slide anim-d7">
+      <div class="pdf-section">
+        <button id="downloadPdfBtn" class="btn btn--pdf btn--glow">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Download PDF Report
+        </button>
+        <p class="pdf-hint">Exports full analysis including charts, stats, and AI insights</p>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer anim-slide" style="animation-delay:.5s">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      This prediction is based on machine learning and may not be 100% accurate. Results should be used as guidance, not definitive proof. Model: Ensemble (LR + RF + XGBoost + SVM).
+    </div>
+  </main>
+
+  <!-- ===== HISTORY MODAL ===== -->
+  <div id="historyModal" class="modal hidden">
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel card">
+      <div class="modal__head">
+        <h3 class="modal__title">Analysis History</h3>
+        <button id="historyClose" class="modal__close" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <p class="modal__desc">Last 5 analyzed profiles stored in your browser.</p>
+      <ul id="historyList" class="hist-list"></ul>
+      <button id="historyClear" class="btn btn--danger" style="width:100%;margin-top:1rem">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        Clear All
+      </button>
+    </div>
+  </div>
+
+  <!-- PDF content wrapper (hidden, used for rendering) -->
+  <div id="pdfCapture" class="pdf-capture-hidden"></div>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
