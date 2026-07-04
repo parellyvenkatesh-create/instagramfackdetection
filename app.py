@@ -306,14 +306,14 @@ def _fetch_via_apify(username: str, token: str, actor_id: str) -> dict:
     pic_url   = item.get("profilePicUrl") or ""
     is_private = item.get("isPrivate") or False
     return {
-        "username": item.get("username", username),
-        "followers": int(followers),
-        "following": int(following),
-        "biography": str(bio),
-        "media_count": int(media),
-        "has_profile_pic": int(bool(pic_url)),
-        "is_private": int(bool(is_private)),
-    }
+    "username": item.get("username", username),
+    "followers": int(item.get("followersCount", 0)),
+    "following": int(item.get("followsCount", 0)),
+    "biography": item.get("biography", ""),
+    "media_count": int(item.get("postsCount", 0)),
+    "has_profile_pic": 1 if item.get("profilePicUrl") else 0,
+    "is_private": 1 if item.get("private", False) else 0,
+}
 
 
 def build_features(profile: dict) -> ProfileFeatures:
