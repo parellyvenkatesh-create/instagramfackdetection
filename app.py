@@ -263,8 +263,8 @@ def _fetch_via_apify(username: str, token: str, actor_id: str):
     actor_id = actor_id.replace("/", "~")
 
     payload = {
-    "usernames": [username]
-}
+        "usernames": [username]
+    }
 
     start_resp = http_requests.post(
         f"https://api.apify.com/v2/acts/{actor_id}/runs?token={token}",
@@ -278,12 +278,12 @@ def _fetch_via_apify(username: str, token: str, actor_id: str):
     start_resp.raise_for_status()
 
     run = start_resp.json()["data"]
-
     run_id = run["id"]
 
     while True:
         status = http_requests.get(
-            f"https://api.apify.com/v2/acts/{actor_id}/runs/{run_id}?token={token}"
+            f"https://api.apify.com/v2/acts/{actor_id}/runs/{run_id}?token={token}",
+            timeout=60
         ).json()["data"]
 
         if status["status"] == "SUCCEEDED":
@@ -296,20 +296,28 @@ def _fetch_via_apify(username: str, token: str, actor_id: str):
 
     dataset = status["defaultDatasetId"]
 
-    items = http_requests.get(
-        f"https://api.apify.com/v2/datasets/{dataset}/items?clean=true"
-    ).json()
+    items_resp = http_requests.get(
+        f"https://api.apify.com/v2/datasets/{dataset}/items?clean=true&limit=1",
+        timeout=60
+    )
+
+    items_resp.raise_for_status()
+
+    items = items_resp.json()
+
+    if not items:
+        raise Exception("Apify returned no profile data.")
 
     item = items[0]
 
     return {
-        "username": item["username"],
-        "followers": item["followersCount"],
-        "following": item["followsCount"],
-        "biography": item["biography"],
-        "media_count": item["postsCount"],
-        "has_profile_pic": 1 if item["profilePicUrl"] else 0,
-        "is_private": 1 if item["private"] else 0,
+        "username": item.get("username", username),
+        "followers": int(item.get("followersCount", 0)),
+        "following": int(item.get("followsCount", 0)),
+        "biography": item.get("biography", ""),
+        "media_count": int(item.get("postsCount", 0)),
+        "has_profile_pic": 1 if item.get("profilePicUrl") else 0,
+        "is_private": 1 if item.get("private", False) else 0,
     }
 def build_features(profile: dict) -> ProfileFeatures:
     username    = profile["username"]
