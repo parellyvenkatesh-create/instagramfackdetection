@@ -262,7 +262,7 @@ def _pick(data: dict, *keys, default=None):
 def _fetch_via_apify(username: str, token: str, actor_id: str) -> dict:
     actor_id = actor_id.replace("/", "~") if "/" in actor_id and "~" not in actor_id else actor_id
     profile_url = f"https://www.instagram.com/{username}/"
-    payload     = {"directUrls": [profile_url], "resultsType": "details"}
+    payload     = {"directUrls": [profile_url], "resultsType": "details","resultsLimit":1}
 
     start_resp = http_requests.post(
         f"https://api.apify.com/v2/acts/{actor_id}/runs?token={token}",
